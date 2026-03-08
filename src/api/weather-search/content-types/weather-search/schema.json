@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "weather_searches",
+  "info": {
+    "singularName": "weather-search",
+    "pluralName": "weather-searches",
+    "displayName": "Weather Search",
+    "description": "Stores weather search results"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "city": {
+      "type": "string",
+      "required": true
+    },
+    "country": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "decimal"
+    },
+    "longitude": {
+      "type": "decimal"
+    },
+    "temperatureC": {
+      "type": "decimal"
+    },
+    "humidity": {
+      "type": "integer"
+    },
+    "windSpeed": {
+      "type": "decimal"
+    },
+    "windDirection": {
+      "type": "integer"
+    },
+    "weatherCode": {
+      "type": "integer"
+    },
+    "weatherText": {
+      "type": "string"
+    },
+    "fetchedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "provider": {
+      "type": "string",
+      "default": "open-meteo"
+    },
+    "providerRaw": {
+      "type": "json"
+    }
+  }
+}
