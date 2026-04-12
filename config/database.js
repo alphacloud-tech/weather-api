@@ -20,7 +20,19 @@ module.exports = ({ env }) => {
           rejectUnauthorized: env.bool('DATABASE_SSL_REJECT_UNAUTHORIZED', true),
         },
       },
-      pool: { min: env.int('DATABASE_POOL_MIN', 2), max: env.int('DATABASE_POOL_MAX', 10) },
+      pool: {
+        min: env.int('DATABASE_POOL_MIN', 2),
+        max: env.int('DATABASE_POOL_MAX', 10),
+        /**
+         * Some MySQL/MariaDB installs default to MyISAM, which has a much lower max index key length (often 1000 bytes).
+         * Strapi relies on modern index sizes; forcing InnoDB at the session level avoids "Specified key was too long".
+         */
+        afterCreate: (conn, done) => {
+          conn.query("SET SESSION default_storage_engine = 'InnoDB'", (err) => {
+            done(err, conn);
+          });
+        },
+      },
     },
     postgres: {
       connection: {

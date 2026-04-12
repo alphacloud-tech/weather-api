@@ -1,0 +1,138 @@
+diff --git a/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.js b/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.js
+index ef78d8e..e53d134 100644
+--- a/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.js
++++ b/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.js
+@@ -306,7 +306,15 @@ const transformContentTypesToModels = (contentTypes, identifiers)=>{
+         const documentIdAttribute = contentType.modelType === 'contentType' ? {
+             documentId: {
+                 type: 'string',
+-                default: createDocumentId
++                default: createDocumentId,
++                // MySQL with utf8mb4 can hit index size limits when using default VARCHAR(255)
++                // Strapi documentId values are short (cuid2), so a smaller column is safe and avoids key-too-long errors.
++                columnType: {
++                    type: 'string',
++                    args: [
++                        64
++                    ]
++                }
+             }
+         } : {};
+         // TODO: this needs to be combined with getReservedNames, we should not be maintaining two lists
+@@ -340,23 +348,31 @@ const transformContentTypesToModels = (contentTypes, identifiers)=>{
+             foreignKeys: contentType.foreignKeys,
+             lifecycles: contentType?.lifecycles ?? {}
+         };
+-        // Add indexes to model
+-        if (contentType.modelType === 'contentType') {
+-            model.indexes = [
+-                ...model.indexes || [],
+-                {
+-                    name: identifiers.getIndexName([
+-                        contentType.collectionName,
+-                        'documents'
+-                    ]),
+-                    // Filter attributes that are not in the schema
+-                    columns: [
+-                        'documentId',
+-                        'locale',
+-                        'publishedAt'
+-                    ].filter((n)=>model.attributes[n]).map((name)=>identifiers.getColumnName(fp.snakeCase(name)))
++        // Ensure "documents" lookup fields stay index-friendly on MySQL
++        if (model.attributes.locale) {
++            model.attributes.locale = {
++                ...model.attributes.locale,
++                columnType: {
++                    type: 'string',
++                    args: [
++                        16
++                    ]
++                }
++            };
++        }
++        if (model.attributes.publishedAt) {
++            model.attributes.publishedAt = {
++                ...model.attributes.publishedAt,
++                columnType: {
++                    type: 'datetime',
++                    args: [
++                        {
++                            useTz: false,
++                            precision: 6
++                        }
++                    ]
+                 }
+-            ];
++            };
+         }
+         models.push(model);
+     });
+diff --git a/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.mjs b/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.mjs
+index 316179c..039506e 100644
+--- a/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.mjs
++++ b/node_modules/@strapi/core/dist/utils/transform-content-types-to-models.mjs
+@@ -304,7 +304,15 @@ const transformContentTypesToModels = (contentTypes, identifiers)=>{
+         const documentIdAttribute = contentType.modelType === 'contentType' ? {
+             documentId: {
+                 type: 'string',
+-                default: createDocumentId
++                default: createDocumentId,
++                // MySQL with utf8mb4 can hit index size limits when using default VARCHAR(255)
++                // Strapi documentId values are short (cuid2), so a smaller column is safe and avoids key-too-long errors.
++                columnType: {
++                    type: 'string',
++                    args: [
++                        64
++                    ]
++                }
+             }
+         } : {};
+         // TODO: this needs to be combined with getReservedNames, we should not be maintaining two lists
+@@ -338,23 +346,31 @@ const transformContentTypesToModels = (contentTypes, identifiers)=>{
+             foreignKeys: contentType.foreignKeys,
+             lifecycles: contentType?.lifecycles ?? {}
+         };
+-        // Add indexes to model
+-        if (contentType.modelType === 'contentType') {
+-            model.indexes = [
+-                ...model.indexes || [],
+-                {
+-                    name: identifiers.getIndexName([
+-                        contentType.collectionName,
+-                        'documents'
+-                    ]),
+-                    // Filter attributes that are not in the schema
+-                    columns: [
+-                        'documentId',
+-                        'locale',
+-                        'publishedAt'
+-                    ].filter((n)=>model.attributes[n]).map((name)=>identifiers.getColumnName(fp.snakeCase(name)))
++        // Ensure "documents" lookup fields stay index-friendly on MySQL
++        if (model.attributes.locale) {
++            model.attributes.locale = {
++                ...model.attributes.locale,
++                columnType: {
++                    type: 'string',
++                    args: [
++                        16
++                    ]
++                }
++            };
++        }
++        if (model.attributes.publishedAt) {
++            model.attributes.publishedAt = {
++                ...model.attributes.publishedAt,
++                columnType: {
++                    type: 'datetime',
++                    args: [
++                        {
++                            useTz: false,
++                            precision: 6
++                        }
++                    ]
+                 }
+-            ];
++            };
+         }
+         models.push(model);
+     });
